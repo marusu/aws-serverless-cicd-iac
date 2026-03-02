@@ -1,2 +1,2 @@
 # aws-serverless-cicd-iac
-Production-oriented serverless architecture on AWS using Terraform and GitHub Actions (OIDC), featuring Plan/Apply separation and deployment strategy.
+This repository demonstrates a production-oriented serverless architecture built with Terraform and deployed via GitHub Actions (OIDC), including Plan/Apply separation and deployment strategy.
