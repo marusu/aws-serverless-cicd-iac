@@ -1,6 +1,5 @@
-resource "aws_s3_bucket" "day3_demo" {
-  bucket = "marusu-aws-serverless-cicd-iac-day3-demo"
-}
+# TODO(DayX): Re-introduce remote backend (S3 + DynamoDB) and manage state bucket via Terraform (or import).
+# NOTE: Temporarily removed day3_demo bucket to unblock Day4 (BucketAlreadyOwnedByYou due to missing remote state).
 
 resource "aws_iam_role" "lambda_role" {
   name = "terraform-demo-lambda-role"
