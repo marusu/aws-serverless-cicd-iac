@@ -27,9 +27,9 @@ resource "aws_iam_role_policy_attachment" "lambda_basic" {
 resource "aws_lambda_function" "hello" {
   function_name = "terraform-demo-hello"
 
-  filename      = "${path.module}/../lambda/hello.zip"
-  handler       = "hello.lambda_handler"
-  runtime       = "python3.11"
+  filename = "${path.module}/../lambda/hello.zip"
+  handler  = "hello.lambda_handler"
+  runtime  = "python3.11"
 
   role = aws_iam_role.lambda_role.arn
 
