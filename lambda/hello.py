@@ -7,9 +7,13 @@ table = dynamodb.Table(os.environ["TABLE_NAME"])
 
 
 def lambda_handler(event, context):
-    http_method = event.get("requestContext", {}).get("http", {}).get("method", "")
+    http_method = (
+        event.get("requestContext", {}).get("http", {}).get("method")
+        or event.get("httpMethod")
+        or ""
+    )
 
-    if http_method == "POST":
+    if http_method.upper() == "POST":
         body = json.loads(event.get("body") or "{}")
         item_id = body.get("id")
         message = body.get("message")
