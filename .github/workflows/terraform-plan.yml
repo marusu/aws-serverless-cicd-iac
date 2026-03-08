@@ -5,6 +5,7 @@ on:
     paths:
       - "infra/**"
       - "lambda/**"
+      - ".github/workflows/**"
 
 permissions:
   id-token: write
