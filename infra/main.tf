@@ -1,5 +1,6 @@
-# TODO(DayX): Re-introduce remote backend (S3 + DynamoDB) and manage state bucket via Terraform (or import).
-# NOTE: Temporarily removed day3_demo bucket to unblock Day4 (BucketAlreadyOwnedByYou due to missing remote state).
+resource "aws_s3_bucket" "day3_demo" {
+  bucket = "marusu-aws-serverless-cicd-iac-day3-demo"
+}
 
 resource "aws_iam_role" "lambda_role" {
   name = "terraform-demo-lambda-role"
@@ -34,6 +35,12 @@ resource "aws_lambda_function" "hello" {
 
   source_code_hash = filebase64sha256("${path.module}/../lambda/hello.zip")
   publish          = true
+
+  environment {
+    variables = {
+      TABLE_NAME = aws_dynamodb_table.app_data.name
+    }
+  }
 }
 
 resource "aws_lambda_alias" "prod" {
@@ -59,6 +66,12 @@ resource "aws_apigatewayv2_route" "hello_route" {
   target    = "integrations/${aws_apigatewayv2_integration.lambda_integration.id}"
 }
 
+resource "aws_apigatewayv2_route" "hello_post_route" {
+  api_id    = aws_apigatewayv2_api.http_api.id
+  route_key = "POST /hello"
+  target    = "integrations/${aws_apigatewayv2_integration.lambda_integration.id}"
+}
+
 resource "aws_apigatewayv2_stage" "default" {
   api_id      = aws_apigatewayv2_api.http_api.id
   name        = "$default"
@@ -73,5 +86,35 @@ resource "aws_lambda_permission" "api_gateway" {
   principal     = "apigateway.amazonaws.com"
 
   source_arn = "${aws_apigatewayv2_api.http_api.execution_arn}/*/*"
+}
+
+resource "aws_dynamodb_table" "app_data" {
+  name         = "terraform-demo-app-data"
+  billing_mode = "PAY_PER_REQUEST"
+  hash_key     = "id"
+
+  attribute {
+    name = "id"
+    type = "S"
+  }
+}
+
+resource "aws_iam_role_policy" "lambda_dynamodb_policy" {
+  name = "terraform-demo-lambda-dynamodb-policy"
+  role = aws_iam_role.lambda_role.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "dynamodb:GetItem",
+          "dynamodb:PutItem"
+        ]
+        Resource = aws_dynamodb_table.app_data.arn
+      }
+    ]
+  })
 }
 
