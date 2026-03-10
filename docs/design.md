@@ -6,7 +6,7 @@
 
 インフラ構成はすべてTerraformコードで管理しており、GitHub Pull RequestをトリガーとしたCI/CDパイプラインによって、安全なインフラ変更を実現している。
 
-また、GitHub ActionsとAWSの認証にはOIDC（OpenID Connect）を利用し、長期的なアクセスキーを使用しないセキュアな認証方式を採用している。
+また、GitHub ActionsとAWSの認証にはOIDC（OpenID Connect）を利用し、長期的なAWSアクセスキーをGitHub Secretsに保存することなく、一時的な認証情報を利用したセキュアな認証方式を採用している。
 
 ---
 
@@ -93,7 +93,7 @@ Email Notification
 
 ## 4. Terraform設計
 
-## 4.1 Infrastructure as Code
+### 4.1 Infrastructure as Code
 
 本プロジェクトではTerraformを用いてAWSインフラをコード化している。
 
@@ -106,16 +106,17 @@ Terraformを使用することで以下のメリットを得る。
 
 ---
 
-## 4.2 Terraform State管理
+### 4.2 Terraform State管理
 
-Terraform stateは以下の構成で管理している。
+Terraformの状態管理（State）は、リモートバックエンドとしてAmazon S3を使用している。  
+また、同時実行によるStateの競合を防ぐため、Amazon DynamoDBによるState Lockを構成している。
 
-|項目|サービス|
-|---|---|
-|State保存|S3|
-|State Lock|DynamoDB|
+TerraformのState管理構成は以下の通り。
 
-これにより複数環境からのTerraform実行時でもstateの整合性を維持できる。
+|項目|サービス|役割|
+|---|---|---|
+|State保存|Amazon S3|TerraformのStateファイルを保存|
+|State Lock|Amazon DynamoDB|Terraform実行時の排他制御|
 
 ---
 
@@ -146,36 +147,43 @@ GitHub Actions (Apply)
 
 CI処理では以下を実行する。
 
+```bash
 terraform fmt
 terraform init
 terraform validate
 terraform plan
+```
 
 mainブランチへのマージ時には以下を実行する。
 
+```bash
 terraform apply
+```
 
-これによりインフラ変更は必ずPull Requestを経由する形となり、安全にインフラ変更を管理できる。
+これによりインフラ変更は必ずPull Requestを経由する形となり、コードレビューを通じて安全にインフラ変更を管理できる。
 
 ---
 
 ## 6. 認証設計（OIDC）
 
-GitHub ActionsからAWSへの認証にはOIDCを使用している。
+GitHub Actions から AWS への認証には OIDC（OpenID Connect）を使用している。
 
-従来のアクセスキー方式とは異なり、OIDCを利用することで長期的な認証情報をGitHubに保存する必要がなくなる。
+従来のアクセスキー方式とは異なり、OIDC を利用することで、長期的な AWS アクセスキーを GitHub Secrets に保存することなく、一時的な認証情報で AWS にアクセスできる。
 
 ### 利点
 
-- 長期アクセスキー不要
-- セキュアな認証
+- 長期アクセスキーが不要
+- 一時的な認証情報によるセキュアな認証
 - IAMロールによる権限制御
+- GitHub Actions の実行元リポジトリやブランチを条件にしたアクセス制御が可能
 
-OIDC Provider
+### OIDC Provider
 
+```text
 token.actions.githubusercontent.com
+```
 
-IAMロールの信頼ポリシーでは、特定のGitHubリポジトリのみがロールを引き受け可能な条件を設定している。
+IAMロールの信頼ポリシーでは、GitHub Actions から発行される OIDC トークンを検証し、特定のリポジトリおよび条件に一致するワークフローのみがロールを引き受け可能な設定としている。
 
 ---
 
@@ -196,6 +204,8 @@ Lambda Version
 ```
 
 API GatewayはLambdaのAliasを参照する構成としている。
+これにより、Aliasの参照先Versionを切り替えることで、
+アプリケーションコードのロールバックを迅速に実施することができる。
 
 この方式により
 
@@ -221,13 +231,15 @@ API GatewayはLambdaのAliasを参照する構成としている。
 
 課金モードは以下を採用している。
 
+```text
 PAY_PER_REQUEST
+```
 
 理由
 
-- トラフィック予測不要
-- PoC用途に適している
-- スケーリング管理不要
+- トラフィック量の事前予測が不要
+- アクセス量に応じた自動スケーリング
+- PoC用途における運用負荷の軽減
 
 ---
 
@@ -237,10 +249,13 @@ LambdaからDynamoDBへのアクセスには最小権限ポリシーを採用し
 
 許可アクション
 
+```text
 dynamodb:GetItem
 dynamodb:PutItem
+```
 
-AdministratorAccessなどの過剰な権限は使用していない。
+AdministratorAccessなどの広範な権限は付与せず、
+最小権限の原則（Principle of Least Privilege）に基づいたIAMポリシーを設定している。
 
 これによりセキュリティリスクを最小化している。
 
@@ -254,10 +269,10 @@ AdministratorAccessなどの過剰な権限は使用していない。
 
 | メトリクス | 説明 |
 |---|---|
-| Lambda Errors | Lambda実行エラー |
-| Lambda Duration | 処理時間 |
+| Errors | Lambda実行エラー |
+| Duration | Lambda処理時間 |
 
-CloudWatch Alarmが発生した場合、SNSを通じてメール通知を行う。
+CloudWatch Alarmが閾値を超過した場合、Amazon SNSを通じてメール通知を行う。
 
 監視フロー
 
@@ -274,7 +289,7 @@ CloudWatch Alarm
 SNS
   │
   ▼
-Email通知
+Email Notification
 ```
 
 ---
@@ -332,7 +347,7 @@ GET /hello?id=001
 - Lambda Canaryデプロイ
 - Terraform Module化
 - API Gateway認証（Cognito / JWT）
-- Observability強化（X-Ray / Structured Logs）
+- Observability強化（AWS X-Rayによるトレーシング、構造化ログの導入）
 
 ---
 
@@ -340,10 +355,10 @@ GET /hello?id=001
 
 本プロジェクトでは以下を実現した。
 
-- TerraformによるIaC
-- GitHub ActionsによるCI/CD
+- TerraformによるInfrastructure as Code
+- GitHub ActionsによるCI/CDパイプライン
 - OIDCによるセキュアなAWS認証
-- Serverlessアーキテクチャ
+- Serverlessアーキテクチャによるアプリケーション基盤
 - CloudWatchによる監視基盤
 
-これにより、インフラ変更の安全性・再現性・自動化を実現した。
+これにより、インフラ構成のコード管理、再現性のある環境構築、および安全なインフラ変更の自動化を実現した。
