@@ -91,7 +91,7 @@ Email Notification
 
 ---
 
-# 4. Terraform設計
+## 4. Terraform設計
 
 ## 4.1 Infrastructure as Code
 
@@ -159,7 +159,7 @@ terraform apply
 
 ---
 
-# 6. 認証設計（OIDC）
+## 6. 認証設計（OIDC）
 
 GitHub ActionsからAWSへの認証にはOIDCを使用している。
 
@@ -208,7 +208,7 @@ API GatewayはLambdaのAliasを参照する構成としている。
 
 ---
 
-# 8. データストア設計
+## 8. データストア設計
 
 データストアにはAmazon DynamoDBを使用している。
 
@@ -231,7 +231,7 @@ PAY_PER_REQUEST
 
 ---
 
-# 9. IAM設計
+## 9. IAM設計
 
 LambdaからDynamoDBへのアクセスには最小権限ポリシーを採用している。
 
@@ -279,7 +279,7 @@ Email通知
 
 ---
 
-### 11. ディレクトリ構成
+## 11. ディレクトリ構成
 
 ```text
 aws-serverless-cicd-iac
@@ -325,7 +325,7 @@ GET /hello?id=001
 
 ---
 
-# 13. 今後の拡張
+## 13. 今後の拡張
 
 将来的には以下の機能拡張を想定している。
 
@@ -336,7 +336,7 @@ GET /hello?id=001
 
 ---
 
-# 14. まとめ
+## 14. まとめ
 
 本プロジェクトでは以下を実現した。
 
