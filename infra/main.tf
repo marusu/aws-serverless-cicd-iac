@@ -50,7 +50,7 @@ resource "aws_lambda_alias" "prod" {
 }
 
 resource "aws_apigatewayv2_api" "http_api" {
-  name = "portfolio-dev-http-api"
+  name          = "portfolio-dev-http-api"
   protocol_type = "HTTP"
 }
 
@@ -89,7 +89,7 @@ resource "aws_lambda_permission" "api_gateway" {
 }
 
 resource "aws_dynamodb_table" "app_data" {
-  name = "portfolio-dev-app-data"
+  name         = "portfolio-dev-app-data"
   billing_mode = "PAY_PER_REQUEST"
   hash_key     = "id"
 
@@ -129,7 +129,7 @@ resource "aws_sns_topic_subscription" "email_alert" {
 }
 
 resource "aws_cloudwatch_metric_alarm" "lambda_errors" {
-  alarm_name = "portfolio-dev-api-handler-errors"
+  alarm_name          = "portfolio-dev-api-handler-errors"
   comparison_operator = "GreaterThanOrEqualToThreshold"
   evaluation_periods  = 1
   metric_name         = "Errors"
@@ -149,7 +149,7 @@ resource "aws_cloudwatch_metric_alarm" "lambda_errors" {
 }
 
 resource "aws_cloudwatch_metric_alarm" "lambda_duration" {
-  alarm_name = "portfolio-dev-api-handler-duration"
+  alarm_name          = "portfolio-dev-api-handler-duration"
   comparison_operator = "GreaterThanThreshold"
   evaluation_periods  = 1
   metric_name         = "Duration"
