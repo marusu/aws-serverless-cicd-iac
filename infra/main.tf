@@ -1,11 +1,9 @@
-# dummy change
-
 resource "aws_s3_bucket" "day3_demo" {
   bucket = "marusu-aws-serverless-cicd-iac-day3-demo"
 }
 
 resource "aws_iam_role" "lambda_role" {
-  name = "terraform-demo-lambda-role"
+  name = "portfolio-dev-lambda-exec-role"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
@@ -27,7 +25,7 @@ resource "aws_iam_role_policy_attachment" "lambda_basic" {
 }
 
 resource "aws_lambda_function" "hello" {
-  function_name = "terraform-demo-hello"
+  function_name = "portfolio-dev-api-handler"
 
   filename = "${path.module}/../lambda/hello.zip"
   handler  = "hello.lambda_handler"
@@ -52,7 +50,7 @@ resource "aws_lambda_alias" "prod" {
 }
 
 resource "aws_apigatewayv2_api" "http_api" {
-  name          = "terraform-demo-http-api"
+  name = "portfolio-dev-http-api"
   protocol_type = "HTTP"
 }
 
@@ -91,7 +89,7 @@ resource "aws_lambda_permission" "api_gateway" {
 }
 
 resource "aws_dynamodb_table" "app_data" {
-  name         = "terraform-demo-app-data"
+  name = "portfolio-dev-app-data"
   billing_mode = "PAY_PER_REQUEST"
   hash_key     = "id"
 
@@ -102,7 +100,7 @@ resource "aws_dynamodb_table" "app_data" {
 }
 
 resource "aws_iam_role_policy" "lambda_dynamodb_policy" {
-  name = "terraform-demo-lambda-dynamodb-policy"
+  name = "portfolio-dev-lambda-app-data-rw"
   role = aws_iam_role.lambda_role.id
 
   policy = jsonencode({
@@ -121,7 +119,7 @@ resource "aws_iam_role_policy" "lambda_dynamodb_policy" {
 }
 
 resource "aws_sns_topic" "alerts" {
-  name = "terraform-demo-alerts"
+  name = "portfolio-dev-alerts"
 }
 
 resource "aws_sns_topic_subscription" "email_alert" {
@@ -131,7 +129,7 @@ resource "aws_sns_topic_subscription" "email_alert" {
 }
 
 resource "aws_cloudwatch_metric_alarm" "lambda_errors" {
-  alarm_name          = "terraform-demo-lambda-errors"
+  alarm_name = "portfolio-dev-api-handler-errors"
   comparison_operator = "GreaterThanOrEqualToThreshold"
   evaluation_periods  = 1
   metric_name         = "Errors"
@@ -151,7 +149,7 @@ resource "aws_cloudwatch_metric_alarm" "lambda_errors" {
 }
 
 resource "aws_cloudwatch_metric_alarm" "lambda_duration" {
-  alarm_name          = "terraform-demo-lambda-duration"
+  alarm_name = "portfolio-dev-api-handler-duration"
   comparison_operator = "GreaterThanThreshold"
   evaluation_periods  = 1
   metric_name         = "Duration"
