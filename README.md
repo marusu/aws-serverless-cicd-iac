@@ -91,9 +91,10 @@ TerraformのState管理にはリモートバックエンドを使用していま
 | Component | Service |
 |---|---|
 | State Storage | Amazon S3 |
-| State Lock | Amazon DynamoDB |
+| State Lock | Amazon S3 lockfile |
 
-これにより、複数環境からのTerraform実行時でもStateの競合を防ぎ、安全なIaC運用を実現しています。
+StateファイルはS3バケットに保存し、排他制御には `use_lockfile = true` によるS3 lockfileを利用しています。
+これにより、追加のDynamoDBテーブルを用いずに、シンプルな構成で安全なState管理を実現しています。
 
 ---
 
@@ -144,20 +145,26 @@ token.actions.githubusercontent.com
 
 ```
 aws-serverless-cicd-iac
+├─ .github/workflows
+│  ├─ terraform-apply.yml
+│  └─ terraform-plan.yml
 ├─ docs
+│  ├─ architecture.drawio
+│  ├─ architecture.png
 │  └─ design.md
 ├─ infra
-│  ├─ main.tf
-│  ├─ providers.tf
+│  ├─ .terraform.lock.hcl
 │  ├─ backend.tf
-│  └─ variables.tf
+│  ├─ main.tf
+│  ├─ outputs.tf
+│  ├─ providers.tf
+│  ├─ variables.tf
+│  └─ versions.tf
 ├─ lambda
 │  ├─ hello.py
 │  └─ hello.zip
-└─ .github
-   └─ workflows
-      ├─ terraform-plan.yml
-      └─ terraform-apply.yml
+├─ .gitignore
+└─ README.md
 ```
 
 ---
