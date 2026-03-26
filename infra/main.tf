@@ -1,7 +1,3 @@
-resource "aws_s3_bucket" "tfstate_bucket" {
-  bucket = "marusu-aws-serverless-cicd-iac-day3-demo"
-}
-
 resource "aws_iam_role" "lambda_exec_role" {
   name = "portfolio-dev-lambda-exec-role"
 
