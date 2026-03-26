@@ -1,9 +1,8 @@
 terraform {
   backend "s3" {
-    bucket         = "marusu-aws-serverless-cicd-iac-day3-demo"
-    key            = "tfstate/infra.tfstate"
-    region         = "ap-northeast-1"
-    dynamodb_table = "tf-lock-aws-serverless-cicd-iac"
-    encrypt        = true
+    bucket       = "marusu-tfstate-aws-serverless-cicd-iac-apne1"
+    key          = "env/dev/infra.tfstate"
+    region       = "ap-northeast-1"
+    use_lockfile = true
   }
 }
