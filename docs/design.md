@@ -33,6 +33,8 @@
 | Monitoring | Amazon CloudWatch |
 | Notification | Amazon SNS |
 
+![アーキテクチャ図](./architecture.png)
+
 ---
 
 ## 3. アーキテクチャ概要
@@ -108,15 +110,18 @@ Terraformを使用することで以下のメリットを得る。
 
 ### 4.2 Terraform State管理
 
-Terraformの状態管理（State）は、リモートバックエンドとしてAmazon S3を使用している。  
-また、同時実行によるStateの競合を防ぐため、Amazon DynamoDBによるState Lockを構成している。
+Terraformの状態管理（State）は、リモートバックエンドとしてAmazon S3を使用している。
+Stateファイルは専用のS3バケットに保存している。
+
+また、Stateの排他制御には `use_lockfile = true` を利用し、S3上のlockfileによるロックを行っている。
+従来よく用いられていたAmazon DynamoDBによるState Lockは採用していない。
 
 TerraformのState管理構成は以下の通り。
 
 |項目|サービス|役割|
 |---|---|---|
 |State保存|Amazon S3|TerraformのStateファイルを保存|
-|State Lock|Amazon DynamoDB|Terraform実行時の排他制御|
+|State Lock|Amazon S3 lockfile|Terraform実行時の排他制御|
 
 ---
 
@@ -298,20 +303,26 @@ Email Notification
 
 ```text
 aws-serverless-cicd-iac
+├─ .github/workflows
+│  ├─ terraform-apply.yml
+│  └─ terraform-plan.yml
 ├─ docs
+│  ├─ architecture.drawio
+│  ├─ architecture.png
 │  └─ design.md
 ├─ infra
-│  ├─ main.tf
-│  ├─ providers.tf
+│  ├─ .terraform.lock.hcl
 │  ├─ backend.tf
-│  └─ variables.tf
+│  ├─ main.tf
+│  ├─ outputs.tf
+│  ├─ providers.tf
+│  ├─ variables.tf
+│  └─ versions.tf
 ├─ lambda
 │  ├─ hello.py
 │  └─ hello.zip
-└─ .github
-   └─ workflows
-      ├─ terraform-plan.yml
-      └─ terraform-apply.yml
+├─ .gitignore
+└─ README.md
 ```
 
 ---
