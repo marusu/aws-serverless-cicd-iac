@@ -15,9 +15,13 @@ permissions:
 jobs:
   apply:
     runs-on: ubuntu-latest
+
     defaults:
       run:
         working-directory: infra
+        
+    env:
+      TF_VAR_alert_email: ${{ secrets.ALERT_EMAIL }}
 
     steps:
       - uses: actions/checkout@v4
@@ -29,7 +33,7 @@ jobs:
       - name: Configure AWS credentials (OIDC)
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: arn:aws:iam::125210997823:role/github-terraform-oidc-role
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: ap-northeast-1
 
       - name: Terraform init
